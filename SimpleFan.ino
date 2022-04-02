@@ -1,4 +1,4 @@
-//Define connected pin
+//Define connected pin using PB8 and PB9
 #define INA = PB8;
 #define INB = PB9;
 
