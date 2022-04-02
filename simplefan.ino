@@ -11,7 +11,6 @@ void setup()
 
 void loop() 
 { 
-
  // LEFT
   digitalWrite(INA,LOW);
   digitalWrite(INB,HIGH); 
@@ -31,5 +30,4 @@ void loop()
   digitalWrite(INA,LOW);
   digitalWrite(INB,LOW); 
   delay(5000);            //wait for 5 second
-
 }
