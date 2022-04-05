@@ -1,6 +1,7 @@
+#include <Wire.h>  
 // Define connected pin using PB8 and PB9
-#define INA = PB8;
-#define INB = PB9;
+int INA = PB8;
+int INB = PB9;
 
 // Setup digital pin INA and INB as an output
 void setup() 
