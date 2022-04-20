@@ -10,17 +10,14 @@ float getVPP() {
   float result;
   int readValue;             //value read from the sensor
   int maxValue = 0;          // store max value here
-  uint32_t start_time = millis();
-  while ((millis() - start_time) < 1000) //sample for 1 Sec
+  readValue = analogRead(CurrentSensor);
+  // see if you have a new maxValue
+  if (readValue > maxValue)
   {
-    readValue = analogRead(CurrentSensor);
-    // see if you have a new maxValue
-    if (readValue > maxValue)
-    {
-      /*record the maximum sensor value*/
-      maxValue = readValue;
-    }
+    /*record the maximum sensor value*/
+    maxValue = readValue;
   }
+
 
   // Convert the digital data to a voltage
   result = (maxValue * 5.0) / 1024.0;
@@ -70,6 +67,7 @@ static void vCurrentSensor(void *pvParameters) {
     Serial.println(" mA RMS");
 
     Serial.println();
+    vTaskDelay(1000);
   }
 }
 
