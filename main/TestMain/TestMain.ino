@@ -235,7 +235,7 @@ void setup() {
   pinMode(FanInB, OUTPUT);
   pinMode(LEDs, OUTPUT);
 
-  digitalWrite(BuzzerSensor, HIGH);
+  digitalWrite(BuzzerSensor, HIGH );
 
   //Interrupt
   attachInterrupt(FanInterruptPin, InterruptHandleFan, CHANGE);
