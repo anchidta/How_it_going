@@ -29,7 +29,8 @@ static xSemaphoreHandle SemFan;
 static xSemaphoreHandle SemBuzz;
 
 int FanState = LOW;
-int dayTime;
+int BuzzState = LOW;
+int dayTime = HIGH;
 
 //------------------------- Functions ----------------------------------
 DHT dht(DhtSensor, DHTTYPE);
@@ -112,38 +113,46 @@ static void vFanOn(void *pvParametres) {
 static void vBuzzerOn(void *pvParametres) {
   for (;;) {
     xSemaphoreTake(SemBuzz, portMAX_DELAY);      // Max delay time in board because don't know when interrupt begin
-    for (int i = 0; i < 5; i++)
-    {
-      digitalWrite(BuzzerSensor, HIGH);  //ปิดเสียงเตือน
-      delay(50);
-      digitalWrite(BuzzerSensor, LOW);   //เปิดเสียงเตือน
-      delay(50);
-      Serial.println("DETECTED");
+    if (!dayTime) {
+      //      for (int i = 0; i < 5; i++)
+      //      {
+      //        digitalWrite(BuzzerSensor, HIGH);  //ปิดเสียงเตือน
+      //        delay(50);
+      ////        digitalWrite(BuzzerSensor, LOW);   //เปิดเสียงเตือน
+      ////        delay(50);
+      //        Serial.println("DETECTED");
+      //      }
+      //      for (int i = 0; i < 5; i++)
+      //      {
+      //        digitalWrite(BuzzerSensor, HIGH);  //ปิดเสียงเตือน
+      //        delay(20);
+      ////        digitalWrite(BuzzerSensor, LOW);   //เปิดเสียงเตือน
+      ////        delay(20);
+      //        Serial.println("DETECTED");
+      //      }
+      //      for (int i = 0; i < 5; i++)
+      //      {
+      //        digitalWrite(BuzzerSensor, HIGH);  //ปิดเสียงเตือน
+      //        delay(50);
+      ////        digitalWrite(BuzzerSensor, LOW);   //เปิดเสียงเตือน
+      ////        delay(50);
+      //        Serial.println("DETECTED");
+      //      }
+      //      for (int i = 0; i < 5; i++)
+      //      {
+      //        digitalWrite(BuzzerSensor, HIGH);  //ปิดเสียงเตือน
+      //        delay(20);
+      ////        digitalWrite(BuzzerSensor, LOW);   //เปิดเสียงเตือน
+      ////        delay(20);
+      //        Serial.println("DETECTED");
+      //      }
+      Serial.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>DETECTED");
+      digitalWrite(BuzzerSensor, LOW);
+      vTaskDelay(3000);
+      digitalWrite(BuzzerSensor, HIGH);
+
     }
-    for (int i = 0; i < 5; i++)
-    {
-      digitalWrite(BuzzerSensor, HIGH);  //ปิดเสียงเตือน
-      delay(20);
-      digitalWrite(BuzzerSensor, LOW);   //เปิดเสียงเตือน
-      delay(20);
-      Serial.println("DETECTED");
-    }
-    for (int i = 0; i < 5; i++)
-    {
-      digitalWrite(BuzzerSensor, HIGH);  //ปิดเสียงเตือน
-      delay(50);
-      digitalWrite(BuzzerSensor, LOW);   //เปิดเสียงเตือน
-      delay(50);
-      Serial.println("DETECTED");
-    }
-    for (int i = 0; i < 5; i++)
-    {
-      digitalWrite(BuzzerSensor, HIGH);  //ปิดเสียงเตือน
-      delay(20);
-      digitalWrite(BuzzerSensor, LOW);   //เปิดเสียงเตือน
-      delay(20);
-      Serial.println("DETECTED");
-    }
+    //    vTaskDelay(1000);
   }
 }
 
@@ -200,14 +209,14 @@ static void vDhtSensor(void *pvParameters) {
 void InterruptHandleFan() {
   static signed portBASE_TYPE xHigherPriorityTaskWoken;
   xHigherPriorityTaskWoken = pdFALSE;
-  Serial.println("TOUCHED");
+  //  Serial.println("TOUCHED");
   xSemaphoreGiveFromISR(SemFan, &xHigherPriorityTaskWoken);    // Semaphore give token to ISR.
 }
 
 void InterruptHandleBuzz() {
   static signed portBASE_TYPE xHigherPriorityTaskWoken;
   xHigherPriorityTaskWoken = pdFALSE;
-  Serial.println("ALERT");
+  //  Serial.println("ALERT");
   xSemaphoreGiveFromISR(SemBuzz, &xHigherPriorityTaskWoken);    // Semaphore give token to ISR.
 }
 
@@ -226,6 +235,8 @@ void setup() {
   pinMode(FanInB, OUTPUT);
   pinMode(LEDs, OUTPUT);
 
+  digitalWrite(BuzzerSensor, HIGH);
+
   //Interrupt
   attachInterrupt(FanInterruptPin, InterruptHandleFan, CHANGE);
   SemFan = xSemaphoreCreateBinary();
@@ -236,31 +247,31 @@ void setup() {
               "Current Sensor Task",
               configMINIMAL_STACK_SIZE,
               NULL,
-              tskIDLE_PRIORITY + 2,
+              configMAX_PRIORITIES - 3,
               NULL);
   xTaskCreate(vFanOn,
               "Fan and Touch Sensor Interrupt",
               configMINIMAL_STACK_SIZE + 50,
               NULL,
-              tskIDLE_PRIORITY + 2,
+              configMAX_PRIORITIES,
               NULL);
   xTaskCreate(vBuzzerOn,
               "Buzzer and PIR Sensor Interrupt",
               configMINIMAL_STACK_SIZE + 50,
               NULL,
-              tskIDLE_PRIORITY + 2,
+              configMAX_PRIORITIES - 1,
               NULL);
   xTaskCreate(vLightsOn,
               "Turn LEDs on",
               configMINIMAL_STACK_SIZE + 50,
               NULL,
-              tskIDLE_PRIORITY + 2,
+              configMAX_PRIORITIES - 2,
               NULL);
   xTaskCreate(vDhtSensor,
               "DHT Sensor Task",
               configMINIMAL_STACK_SIZE + 50,
               NULL,
-              tskIDLE_PRIORITY + 2,
+              configMAX_PRIORITIES - 4,
               NULL);
 
   noInterrupts();
