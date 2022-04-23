@@ -4,8 +4,8 @@
 #include "DHT.h"
 
 //-------------------------------- Pins --------------------------------
-#define BuzzerSensor PA0
-#define DhtSensor PA1
+#define BuzzerSensor PA1
+#define DhtSensor PA0
 //#define Wifi1 PA2
 //#define Wifi2 PA3
 #define CurrentSensor PA6
@@ -32,8 +32,8 @@ int FanState = LOW;
 int BuzzState = LOW;
 int dayTime = HIGH;
 
-//------------------------- Functions ----------------------------------
 DHT dht(DhtSensor, DHTTYPE);
+//------------------------- Functions ----------------------------------
 
 float getVPP() {
   float result;
@@ -43,7 +43,6 @@ float getVPP() {
   // see if you have a new maxValue
   if (readValue > maxValue)
   {
-    /*record the maximum sensor value*/
     maxValue = readValue;
   }
 
@@ -58,31 +57,11 @@ float getVPP() {
 static void vCurrentSensor(void *pvParameters) {
   for (;;) {
     nVPP = getVPP();
-    /*
-      Use Ohms law to calculate current across resistor
-      and express in mA
-    */
-
     nCurrThruResistorPP = (nVPP / 200.0) * 1000.0;
-
-    /*
-      Use Formula for SINE wave to convert
-      to RMS
-    */
-
     nCurrThruResistorRMS = nCurrThruResistorPP * 0.707;
-
-    /*
-      Current Transformer Ratio is 1000:1...
-
-      Therefore current through 200 ohm resistor
-      is multiplied by 1000 to get input current
-    */
-
     nCurrentThruWire = nCurrThruResistorRMS * 1000;
     Serial.print("Volts Peak : ");
     Serial.println(nVPP, 3);
-
 
     Serial.print("Current Through Resistor (Peak) : ");
     Serial.print(nCurrThruResistorPP, 3);
@@ -103,10 +82,12 @@ static void vCurrentSensor(void *pvParameters) {
 
 static void vFanOn(void *pvParametres) {
   for (;;) {
+    
     xSemaphoreTake(SemFan, portMAX_DELAY);      // Max delay time in board because don't know when interrupt begin
     Serial.println("Change Fan State");
     FanState = !FanState;                         // State Toggle.
     digitalWrite(FanInB, FanState);
+  
   }
 }
 
@@ -114,45 +95,14 @@ static void vBuzzerOn(void *pvParametres) {
   for (;;) {
     xSemaphoreTake(SemBuzz, portMAX_DELAY);      // Max delay time in board because don't know when interrupt begin
     if (!dayTime) {
-      //      for (int i = 0; i < 5; i++)
-      //      {
-      //        digitalWrite(BuzzerSensor, HIGH);  //ปิดเสียงเตือน
-      //        delay(50);
-      ////        digitalWrite(BuzzerSensor, LOW);   //เปิดเสียงเตือน
-      ////        delay(50);
-      //        Serial.println("DETECTED");
-      //      }
-      //      for (int i = 0; i < 5; i++)
-      //      {
-      //        digitalWrite(BuzzerSensor, HIGH);  //ปิดเสียงเตือน
-      //        delay(20);
-      ////        digitalWrite(BuzzerSensor, LOW);   //เปิดเสียงเตือน
-      ////        delay(20);
-      //        Serial.println("DETECTED");
-      //      }
-      //      for (int i = 0; i < 5; i++)
-      //      {
-      //        digitalWrite(BuzzerSensor, HIGH);  //ปิดเสียงเตือน
-      //        delay(50);
-      ////        digitalWrite(BuzzerSensor, LOW);   //เปิดเสียงเตือน
-      ////        delay(50);
-      //        Serial.println("DETECTED");
-      //      }
-      //      for (int i = 0; i < 5; i++)
-      //      {
-      //        digitalWrite(BuzzerSensor, HIGH);  //ปิดเสียงเตือน
-      //        delay(20);
-      ////        digitalWrite(BuzzerSensor, LOW);   //เปิดเสียงเตือน
-      ////        delay(20);
-      //        Serial.println("DETECTED");
-      //      }
-      Serial.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>DETECTED");
-      digitalWrite(BuzzerSensor, LOW);
+      
+      Serial.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>  DETECTED");
+      analogWrite(BuzzerSensor, 230);
       vTaskDelay(3000);
-      digitalWrite(BuzzerSensor, HIGH);
+      analogWrite(BuzzerSensor, 0);
 
     }
-    //    vTaskDelay(1000);
+        vTaskDelay(100);
   }
 }
 
@@ -178,45 +128,48 @@ static void vLightsOn(void *pvParameters) {
       dayTime = LOW;
 
     }
+    vTaskDelay(200);
   }
 }
 
 static void vDhtSensor(void *pvParameters) {
   for (;;) {
+    
     float h = dht.readHumidity();
     float t = dht.readTemperature();
     float f = dht.readTemperature(false);
+    
     // Check if any reads failed and exit early (to try again).
     if (isnan(h) || isnan(t) || isnan(f)) {
       Serial.println(F("Failed to read from DHT sensor!"));
-      return;
     }
-    // Compute heat index in Celsius (isFahreheit = false)
-    float hic = dht.computeHeatIndex(t, h, false);
-    Serial.print(F("Humidity: "));
-    Serial.print(h);
-    Serial.print(F("%  Temperature: "));
-    Serial.print(t);
-    Serial.print(F("°C "));
-    Serial.print(f);
-    Serial.print(F("°F  Heat index: "));
-    Serial.print(hic);
-    Serial.println(F("°C "));
+    else{
 
+      float hic = dht.computeHeatIndex(t, h, false);
+      Serial.print(F("Humidity: "));
+      Serial.print(h);
+      Serial.print(F("%  Temperature: "));
+      Serial.print(t);
+      Serial.print(F("°C "));
+      Serial.print(f);
+      Serial.print(F("°F  Heat index: "));
+      Serial.print(hic);
+      Serial.println(F("°C "));
+      
+    }
+    vTaskDelay(500);
   }
 }
 //------------------------------ Interrupt ------------------------------
 void InterruptHandleFan() {
   static signed portBASE_TYPE xHigherPriorityTaskWoken;
   xHigherPriorityTaskWoken = pdFALSE;
-  //  Serial.println("TOUCHED");
   xSemaphoreGiveFromISR(SemFan, &xHigherPriorityTaskWoken);    // Semaphore give token to ISR.
 }
 
 void InterruptHandleBuzz() {
   static signed portBASE_TYPE xHigherPriorityTaskWoken;
   xHigherPriorityTaskWoken = pdFALSE;
-  //  Serial.println("ALERT");
   xSemaphoreGiveFromISR(SemBuzz, &xHigherPriorityTaskWoken);    // Semaphore give token to ISR.
 }
 
@@ -224,6 +177,7 @@ void InterruptHandleBuzz() {
 //-------------------------------------- Setup ------------------------------------
 void setup() {
   Serial.begin(9600);
+  dht.begin();
   //Pins
   pinMode(BuzzerSensor, OUTPUT);
   pinMode(DhtSensor, INPUT);
@@ -235,10 +189,10 @@ void setup() {
   pinMode(FanInB, OUTPUT);
   pinMode(LEDs, OUTPUT);
 
-  digitalWrite(BuzzerSensor, HIGH );
+  Serial.println("Hello");
 
   //Interrupt
-  attachInterrupt(FanInterruptPin, InterruptHandleFan, CHANGE);
+  attachInterrupt(FanInterruptPin, InterruptHandleFan, RISING);
   SemFan = xSemaphoreCreateBinary();
   attachInterrupt(BuzzInterruptPin, InterruptHandleBuzz, RISING);
   SemBuzz = xSemaphoreCreateBinary();
