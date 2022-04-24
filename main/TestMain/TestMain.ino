@@ -136,11 +136,10 @@ static void vDhtSensor(void *pvParameters) {
   for (;;) {
     
     float h = dht.readHumidity();
-    float t = dht.readTemperature();
-    float f = dht.readTemperature(false);
-    
+    float t = dht.readTemperature(); // Read temperature as Celsius (the default)
+
     // Check if any reads failed and exit early (to try again).
-    if (isnan(h) || isnan(t) || isnan(f)) {
+    if (isnan(h) || isnan(t) ) {
       Serial.println(F("Failed to read from DHT sensor!"));
     }
     else{
@@ -150,16 +149,12 @@ static void vDhtSensor(void *pvParameters) {
       Serial.print(h);
       Serial.print(F("%  Temperature: "));
       Serial.print(t);
-      Serial.print(F("°C "));
-      Serial.print(f);
-      Serial.print(F("°F  Heat index: "));
-      Serial.print(hic);
-      Serial.println(F("°C "));
-      
+      Serial.print(F("°C "));   
     }
     vTaskDelay(500);
   }
 }
+
 //------------------------------ Interrupt ------------------------------
 void InterruptHandleFan() {
   static signed portBASE_TYPE xHigherPriorityTaskWoken;
