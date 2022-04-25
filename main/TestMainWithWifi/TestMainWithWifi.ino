@@ -6,8 +6,6 @@
 //-------------------------------- Pins --------------------------------
 #define BuzzerSensor PA1
 #define DhtSensor PA0
-//#define Wifi1 PA2
-//#define Wifi2 PA3
 #define CurrentSensor PA6
 
 #define LdrSensor PB0
@@ -39,11 +37,16 @@ String data = "<p>Data Received Successfully.....</p>";   //String with html
 static xSemaphoreHandle SemFan;
 static xSemaphoreHandle SemBuzz;
 
-int FanState = LOW;
-int BuzzState = LOW;
-int dayTime = HIGH;
 
 DHT dht(DhtSensor, DHTTYPE);
+
+//Params that will be sent to web
+float g_Current;
+float g_Humidity;
+float g_Temperature;
+int g_dayTime = HIGH;
+int g_fanState = LOW;
+int g_buzzState = LOW;
 //------------------------- Functions ----------------------------------
 
 float getVPP() {
@@ -208,6 +211,7 @@ static void vCurrentSensor(void *pvParameters) {
     nCurrThruResistorPP = (nVPP / 200.0) * 1000.0;
     nCurrThruResistorRMS = nCurrThruResistorPP * 0.707;
     nCurrentThruWire = nCurrThruResistorRMS * 1000;
+    g_Current = nCurrentThruWire;
     Serial.print("Volts Peak : ");
     Serial.println(nVPP, 3);
 
@@ -233,29 +237,34 @@ static void vFanOn(void *pvParametres) {
 
     xSemaphoreTake(SemFan, portMAX_DELAY);      // Max delay time in board because don't know when interrupt begin
     Serial.println("Change Fan State");
-    FanState = !FanState;                         // State Toggle.
-    digitalWrite(FanInB, FanState);
+    g_fanState = !g_fanState;                         // State Toggle.
+    digitalWrite(FanInB, g_fanState);
 
   }
 }
 
 static void vBuzzerOn(void *pvParametres) {
   for (;;) {
+    
     xSemaphoreTake(SemBuzz, portMAX_DELAY);      // Max delay time in board because don't know when interrupt begin
-    if (!dayTime) {
+    if (!g_dayTime) {
 
       Serial.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>  DETECTED");
       analogWrite(BuzzerSensor, 230);
+      g_buzzState = HIGH;
       vTaskDelay(3000);
       analogWrite(BuzzerSensor, 0);
+      g_buzzState = LOW;
 
     }
     vTaskDelay(100);
+    
   }
 }
 
 static void vLightsOn(void *pvParameters) {
   for (;;) {
+    
     int ldrStatus = analogRead(LdrSensor);
 
     //Lights are on
@@ -264,7 +273,7 @@ static void vLightsOn(void *pvParameters) {
       digitalWrite(LEDs, LOW);
       Serial.print("Its BRIGHT, Turn off the LED : ");
       Serial.println(ldrStatus);
-      dayTime = HIGH;
+      g_dayTime = HIGH;
 
     }
     //Lights are off
@@ -273,10 +282,11 @@ static void vLightsOn(void *pvParameters) {
       digitalWrite(LEDs, HIGH);
       Serial.print("Its DARK, Turn on the LED : ");
       Serial.println(ldrStatus);
-      dayTime = LOW;
+      g_dayTime = LOW;
 
     }
     vTaskDelay(200);
+    
   }
 }
 
@@ -285,7 +295,8 @@ static void vDhtSensor(void *pvParameters) {
 
     float h = dht.readHumidity();
     float t = dht.readTemperature(); // Read temperature as Celsius (the default)
-
+    g_Humidity = h;
+    g_Temperature = t;
     // Check if any reads failed and exit early (to try again).
     if (isnan(h) || isnan(t) ) {
       Serial.println(F("Failed to read from DHT sensor!"));
