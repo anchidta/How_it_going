@@ -15,12 +15,11 @@
 #define LEDs PB1
 #define BuzzInterruptPin PB6    //PIR sensor
 #define FanInterruptPin PB7  //Touch sensor
-#define FanInA PB8
 #define FanInB PB9
 #define LEDr PB10
 #define LEDy PB11
-#define LEDg PB4
-#define LEDor PB5
+#define LEDg PB12
+#define LEDor PB13
 
 //---------------------------------- Parameters ---------------------------------------------------
 #define DHTTYPE DHT11
@@ -104,17 +103,15 @@ static void vFanOn(void *pvParametres) {
     
     xSemaphoreTake(SemFan, portMAX_DELAY);      // Max delay time in board because don't know when interrupt begin
     Serial.println("Change Fan State");
-    FanState = !FanState;                         // State Toggle.
+    FanState = !FanState;                       // State Toggle.
     digitalWrite(FanInB, FanState);
-    if(FanState == HIGH){
+    if(FanState == HIGH){                      // If Fan ON LED green ON LED orange OFF
       digitalWrite(LEDg, HIGH);
       digitalWrite(LEDor, LOW);
-      
     }
     else{
-      digitalWrite(LEDg, LOW);
+      digitalWrite(LEDg, LOW);                 // If Fan OFF LED green OFF LED orange ON
       digitalWrite(LEDor, HIGH);
-      
     }
   }
 }
@@ -228,6 +225,8 @@ void setup() {
   pinMode(LEDs, OUTPUT);
   pinMode(LEDr, OUTPUT);
   pinMode(LEDy, OUTPUT);
+  pinMode(LEDg, OUTPUT);
+  pinMode(LEDor, OUTPUT);
   
 
   Serial.println("Hello");
