@@ -1,7 +1,7 @@
 //Interfacing ESP8266 Wi-Fi with STM32F103C8
 //CIRCUIT DIGEST
-//NOTE: Serial is serial monitor with baud rate(9600)
-//NOTE: Serial2 (TX2, RX2)is connected with ESP8266(RX,TX)respectively with baud rate (9600)
+//NOTE: Serial is serial monitor with baud rate(115200)
+//NOTE: Serial2 (TX2, RX2)is connected with ESP8266(RX,TX)respectively with baud rate (115200)
 
 String webpage = "";                                 //String variable to store characters
 int i = 0, k = 0, x = 0;                                 //integer variables
@@ -96,8 +96,8 @@ void wifi_init()                                //This function contains AT comm
   {
 
     Serial.println("Connecting Wifi....");
-    connect_wifi("AT+CWJAP=\"Xiaomi\",\"22222222\"", 7000);        //provide your WiFi username and password here
-
+    //    connect_wifi("AT+CWJAP=\"Xiaomi\",\"22222222\"", 7000);        //provide your WiFi username and password here
+    connect_wifi("AT+CWJAP=\"IMARC_Net\",\"iostab00\"", 7000);
   }
   else
   {
@@ -139,8 +139,8 @@ void sendwebdata(String webPage)                          //This function is use
 
 void setup()
 {
-  Serial.begin(9600);                //begins serial monitor with baud rate 9600
-  Serial2.begin(9600);               //begins serial communication with esp8266 with baud rate 9600 (Change according to your esp8266 module)
+  Serial.begin(115200);                //begins serial monitor with baud rate 115200
+  Serial2.begin(115200);               //begins serial communication with esp8266 with baud rate 115200 (Change according to your esp8266 module)
   wifi_init();
   Serial.println("System Ready..");
 }

@@ -22,7 +22,7 @@ void wifi_init()                                //This function contains AT comm
   {
 
     Serial.println("Connecting Wifi....");
-    connect_wifi("AT+CWJAP=\"Xiaomi\",\"22222222\"", 7000);        //provide your WiFi username and password here
+    connect_wifi("AT+CWJAP=\"IMARC_Net\",\"iostab00\"", 7000);        //provide your WiFi username and password here
 
   }
   else
@@ -32,7 +32,7 @@ void wifi_init()                                //This function contains AT comm
   get_ip();
 
   connect_wifi("AT+CIPMUX=1", 100);                         //Sends AT command with time (For creating multiple connections)
-  connect_wifi("AT+CIPSERVER=1,80", 100);                   //Sends AT command with time (For setting up server with port 80)
+  connect_wifi("AT+CIPSERVER=1,8080", 100);                   //Sends AT command with time (For setting up server with port 80)
 }
 
 void connect_wifi(String cmd, int t)                  //This function is for connecting ESP8266 with wifi network by using AT commands
@@ -116,7 +116,7 @@ void sendwebdata(String webPage)                          //This function is use
     Serial2.print("AT+CIPSEND=0,");
     Serial.println(l + 2);
     Serial2.println(l + 2);
-    delay(100);
+    vTaskDelay(100);
     Serial.println(webPage);                        //sends webpage data to serial monitor
     Serial2.println(webPage);                       //sends webpage data to serial2 ESP8266
     while (Serial2.available())
@@ -130,7 +130,7 @@ void sendwebdata(String webPage)                          //This function is use
     }
     if (ii == 11)
       break;
-    delay(100);
+    vTaskDelay(100);
   }
 }
 
@@ -153,21 +153,22 @@ static void vWifi(void *pvParameters)
   for (;;)
   {
     k = 0;
-    Serial.println("Please Refresh your Page");
+    //    Serial.println("Please Refresh your Page");
     while (k < 1000)
     {
       k++;
       while (Serial2.available())
       {
+        Serial.println("Serial2.available");
         if (Serial2.find("0,CONNECT"))
         {
           Serial.println("Start Printing");
           Send();
           Serial.println("Done Printing");
-          delay(1000);
+          vTaskDelay(1000);
         }
       }
-      delay(1);
+      vTaskDelay(1);
     }
   }
 }
@@ -179,7 +180,7 @@ void setup()
   wifi_init();
   xTaskCreate(vWifi,
               "Wifi Task",
-              configMINIMAL_STACK_SIZE + 50,
+              configMINIMAL_STACK_SIZE + 1000,
               NULL,
               configMAX_PRIORITIES - 1,
               NULL);
