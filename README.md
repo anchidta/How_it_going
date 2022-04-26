@@ -21,5 +21,5 @@ This repository is the workspace for IUP 01205373-60 Embedded Control Systems. O
 
   `TestMain.ino` is used in this project, but the IoT part is still missing. 
 
-  `TestMainWithWifi.ino` consists of all tasks including the IoT; however, it is still work-in-process since the IoT part cannot work probably. 
+  `TestMainWithWifi.ino` consists of all tasks including the IoT; however, it is still work-in-process since the IoT part cannot work properly. 
 
