@@ -194,13 +194,22 @@ void sendwebdata(String webPage)                          //This function is use
 
 void Send()                                        //This function contains data to be sent to local server
 {
-  webpage = "<h1>Welcome to PUI Digest</h1><body bgcolor=f0f0f0>";
+  webpage = "<h1>Welcome !</h1>";
   sendwebdata(webpage);
   vTaskDelay(100);
-  webpage = name;
+  webpage = "<h2>Current :</h2><h3>";
+  webpage += g_Current;
+  webpage += "</h3>";
   sendwebdata(webpage);
   vTaskDelay(100);
-  webpage = g_Current;
+  webpage = "<h2>Humidity :</h2><h3>";
+  webpage += g_Humidity;
+  webpage += "</h3>";
+  sendwebdata(webpage);
+  vTaskDelay(100);
+  webpage = "<h2>Temperature :</h2><h3>";
+  webpage += g_Temperature;
+  webpage += "</h3>";
   sendwebdata(webpage);
   vTaskDelay(100);
   Serial2.println("AT+CIPCLOSE=0");                  //Closes the server connection
