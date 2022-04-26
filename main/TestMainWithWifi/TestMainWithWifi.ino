@@ -2,6 +2,7 @@
 #include <MapleFreeRTOS821.h>
 #include <Wire.h>
 #include "DHT.h"
+#include "pitches.h"
 
 //-------------------------------- Pins --------------------------------
 #define BuzzerSensor PA1
@@ -10,6 +11,10 @@
 
 #define LdrSensor PB0
 #define LEDs PB1
+#define LEDr PB10
+#define LEDy PB11
+#define LEDg PB12
+#define LEDor PB13
 #define BuzzInterruptPin PB6    //PIR sensor
 #define FanInterruptPin PB7  //Touch sensor
 #define FanInA PB8
@@ -38,6 +43,20 @@ float data_int = 0.5;
 static xSemaphoreHandle SemFan;
 static xSemaphoreHandle SemBuzz;
 
+int melody[] = {
+  NOTE_FS5, NOTE_FS5, NOTE_D5, NOTE_B4, NOTE_B4, NOTE_E5,
+  NOTE_E5, NOTE_E5, NOTE_GS5, NOTE_GS5, NOTE_A5, NOTE_B5,
+  NOTE_A5, NOTE_A5, NOTE_A5, NOTE_E5, NOTE_D5, NOTE_FS5,
+  NOTE_FS5, NOTE_FS5, NOTE_E5, NOTE_E5, NOTE_FS5, NOTE_E5
+};
+
+int durations[] = {
+  8, 8, 8, 4, 4, 4,
+  4, 5, 8, 8, 8, 8,
+  8, 8, 8, 4, 4, 4,
+  4, 5, 8, 8, 8, 8
+};
+int songLength = sizeof(melody) / sizeof(melody[0]);
 
 DHT dht(DhtSensor, DHTTYPE);
 
@@ -174,11 +193,12 @@ void sendwebdata(String webPage)                          //This function is use
     Serial2.print("AT+CIPSEND=0,");
     Serial.println(l + 2);
     Serial2.println(l + 2);
-    vTaskDelay(100);
+    vTaskDelay(50);
     Serial.println(webPage);                        //sends webpage data to serial monitor
     Serial2.println(webPage);                       //sends webpage data to serial2 ESP8266
     while (Serial2.available())
     {
+      //      Serial.write(Serial2.read());
       if (Serial2.find("OK"))
       {
         Serial.println("OK");
@@ -211,7 +231,7 @@ void Send()                                        //This function contains data
   webpage += g_Temperature;
   webpage += "</h3>";
   sendwebdata(webpage);
-  vTaskDelay(100);
+  vTaskDelay(500);
   Serial2.println("AT+CIPCLOSE=0");                  //Closes the server connection
   Serial.println("CIPCLOSE");
 }
@@ -250,12 +270,17 @@ static void vFanOn(void *pvParametres) {
   for (;;) {
 
     xSemaphoreTake(SemFan, portMAX_DELAY);      // Max delay time in board because don't know when interrupt begin
-    if (debug) {
-      Serial.println("Change Fan State");
-    }
-    g_fanState = !g_fanState;                         // State Toggle.
+    Serial.println("Change Fan State");
+    g_fanState = !g_fanState;                       // State Toggle.
     digitalWrite(FanInB, g_fanState);
-
+    if (g_fanState == HIGH) {                    // If Fan ON LED green ON LED orange OFF
+      digitalWrite(LEDg, HIGH);
+      digitalWrite(LEDor, LOW);
+    }
+    else {
+      digitalWrite(LEDg, LOW);                 // If Fan OFF LED green OFF LED orange ON
+      digitalWrite(LEDor, HIGH);
+    }
   }
 }
 
@@ -271,10 +296,34 @@ static void vBuzzerOn(void *pvParametres) {
       vTaskDelay(3000);
       analogWrite(BuzzerSensor, 0);
       g_buzzState = LOW;
+      digitalWrite(LEDr, HIGH);
+      delay(50);
+      digitalWrite(LEDr, LOW);
+      delay(50);
+      digitalWrite(LEDy, HIGH);
+      delay(50);
+      digitalWrite(LEDy, LOW);
+      delay(50);
 
+      //      for (int thisNote = 0; thisNote < songLength; thisNote++) {
+      //        int duration = 1000 / durations[thisNote];
+      //        tone(BuzzerSensor, melody[thisNote], duration);
+      //        int pause = duration * 0.3;
+      //        delay(pause);
+      //        noTone(BuzzerSensor);
+      //        digitalWrite(LEDr, HIGH);
+      //        delay(50);
+      //        digitalWrite(LEDr, LOW);
+      //        delay(50);
+      //        digitalWrite(LEDy, HIGH);
+      //        delay(50);
+      //        digitalWrite(LEDy, LOW);
+      //        delay(50);
+      //      }
     }
-    vTaskDelay(100);
 
+
+    vTaskDelay(100);
   }
 }
 
