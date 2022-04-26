@@ -2,7 +2,6 @@
 #include <MapleFreeRTOS821.h>
 #include <Wire.h>
 #include "DHT.h"
-//#include "pitches.h"
 
 //-------------------------------- Pins --------------------------------
 #define BuzzerSensor PA1

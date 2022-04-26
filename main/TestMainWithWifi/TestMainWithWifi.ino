@@ -33,6 +33,7 @@ char temp1 = '0';                                    //character variable
 
 String name = "<p>Circuit Digest</p><p>A community of electrical and electronics students, engineers and makers</p>"; //String with html notations
 String data = "<p>Data Received Successfully.....</p>";   //String with html
+float data_int = 0.5;
 
 static xSemaphoreHandle SemFan;
 static xSemaphoreHandle SemBuzz;
@@ -47,7 +48,8 @@ float g_Temperature;
 int g_dayTime = HIGH;
 int g_fanState = LOW;
 int g_buzzState = LOW;
-//------------------------- Functions ----------------------------------
+bool debug = false;
+////------------------------- Functions ----------------------------------
 
 float getVPP() {
   float result;
@@ -88,7 +90,7 @@ void wifi_init()                                //This function contains AT comm
   get_ip();
 
   connect_wifi("AT+CIPMUX=1", 100);                         //Sends AT command with time (For creating multiple connections)
-  connect_wifi("AT+CIPSERVER=1,8080", 100);                   //Sends AT command with time (For setting up server with port 80)
+  connect_wifi("AT+CIPSERVER=1,80", 100);                   //Sends AT command with time (For setting up server with port 80)
 }
 
 void connect_wifi(String cmd, int t)                  //This function is for connecting ESP8266 with wifi network by using AT commands
@@ -177,9 +179,9 @@ void sendwebdata(String webPage)                          //This function is use
     Serial2.println(webPage);                       //sends webpage data to serial2 ESP8266
     while (Serial2.available())
     {
-
       if (Serial2.find("OK"))
       {
+        Serial.println("OK");
         ii = 11;
         break;
       }
@@ -192,16 +194,17 @@ void sendwebdata(String webPage)                          //This function is use
 
 void Send()                                        //This function contains data to be sent to local server
 {
-  webpage = "<h1>Welcome to Circuit Digest</h1><body bgcolor=f0f0f0>";
+  webpage = "<h1>Welcome to PUI Digest</h1><body bgcolor=f0f0f0>";
   sendwebdata(webpage);
+  vTaskDelay(100);
   webpage = name;
   sendwebdata(webpage);
-  delay(1000);
-  webpage = "<a href=\"http://circuitdigest.com/\"";
-  webpage += "\">Click Here to get into circuitdigest.com</a>";
-  webpage += data;
+  vTaskDelay(100);
+  webpage = g_Current;
   sendwebdata(webpage);
+  vTaskDelay(100);
   Serial2.println("AT+CIPCLOSE=0");                  //Closes the server connection
+  Serial.println("CIPCLOSE");
 }
 
 //---------------------------------------- Tasks ------------------------
@@ -212,22 +215,24 @@ static void vCurrentSensor(void *pvParameters) {
     nCurrThruResistorRMS = nCurrThruResistorPP * 0.707;
     nCurrentThruWire = nCurrThruResistorRMS * 1000;
     g_Current = nCurrentThruWire;
-    Serial.print("Volts Peak : ");
-    Serial.println(nVPP, 3);
+    if (debug) {
+      Serial.print("Volts Peak : ");
+      Serial.println(nVPP, 3);
 
-    Serial.print("Current Through Resistor (Peak) : ");
-    Serial.print(nCurrThruResistorPP, 3);
-    Serial.println(" mA Peak to Peak");
+      Serial.print("Current Through Resistor (Peak) : ");
+      Serial.print(nCurrThruResistorPP, 3);
+      Serial.println(" mA Peak to Peak");
 
-    Serial.print("Current Through Resistor (RMS) : ");
-    Serial.print(nCurrThruResistorRMS, 3);
-    Serial.println(" mA RMS");
+      Serial.print("Current Through Resistor (RMS) : ");
+      Serial.print(nCurrThruResistorRMS, 3);
+      Serial.println(" mA RMS");
 
-    Serial.print("Current Through Wire : ");
-    Serial.print(nCurrentThruWire, 3);
-    Serial.println(" mA RMS");
+      Serial.print("Current Through Wire : ");
+      Serial.print(nCurrentThruWire, 3);
+      Serial.println(" mA RMS");
 
-    Serial.println();
+      Serial.println();
+    }
     vTaskDelay(1000);
   }
 }
@@ -236,7 +241,9 @@ static void vFanOn(void *pvParametres) {
   for (;;) {
 
     xSemaphoreTake(SemFan, portMAX_DELAY);      // Max delay time in board because don't know when interrupt begin
-    Serial.println("Change Fan State");
+    if (debug) {
+      Serial.println("Change Fan State");
+    }
     g_fanState = !g_fanState;                         // State Toggle.
     digitalWrite(FanInB, g_fanState);
 
@@ -245,7 +252,7 @@ static void vFanOn(void *pvParametres) {
 
 static void vBuzzerOn(void *pvParametres) {
   for (;;) {
-    
+
     xSemaphoreTake(SemBuzz, portMAX_DELAY);      // Max delay time in board because don't know when interrupt begin
     if (!g_dayTime) {
 
@@ -258,21 +265,24 @@ static void vBuzzerOn(void *pvParametres) {
 
     }
     vTaskDelay(100);
-    
+
   }
 }
 
 static void vLightsOn(void *pvParameters) {
   for (;;) {
-    
+
     int ldrStatus = analogRead(LdrSensor);
 
     //Lights are on
     if (ldrStatus <= 1000) {
 
       digitalWrite(LEDs, LOW);
-      Serial.print("Its BRIGHT, Turn off the LED : ");
-      Serial.println(ldrStatus);
+      if (debug) {
+        Serial.print("Its BRIGHT, Turn off the LED : ");
+
+        Serial.println(ldrStatus);
+      }
       g_dayTime = HIGH;
 
     }
@@ -280,13 +290,15 @@ static void vLightsOn(void *pvParameters) {
     else {
 
       digitalWrite(LEDs, HIGH);
-      Serial.print("Its DARK, Turn on the LED : ");
-      Serial.println(ldrStatus);
+      if (debug) {
+        Serial.print("Its DARK, Turn on the LED : ");
+        Serial.println(ldrStatus);
+      }
       g_dayTime = LOW;
 
     }
     vTaskDelay(200);
-    
+
   }
 }
 
@@ -304,11 +316,13 @@ static void vDhtSensor(void *pvParameters) {
     else {
 
       float hic = dht.computeHeatIndex(t, h, false);
-      Serial.print(F("Humidity: "));
-      Serial.print(h);
-      Serial.print(F("%  Temperature: "));
-      Serial.print(t);
-      Serial.print(F("°C "));
+      if (debug) {
+        Serial.print(F("Humidity: "));
+        Serial.print(h);
+        Serial.print(F("%  Temperature: "));
+        Serial.print(t);
+        Serial.print(F("°C "));
+      }
     }
     vTaskDelay(500);
   }
@@ -318,21 +332,26 @@ static void vWifi(void *pvParameters)
 {
   for (;;)
   {
+    //    int incomming = Serial2.read();
     k = 0;
-    //    Serial.println("Please Refresh your Page");
+    //        Serial.println("Please Refresh your Page");
     while (k < 1000)
     {
       k++;
       while (Serial2.available())
       {
         Serial.println("Serial2.available");
-        if (Serial2.find("0,CONNECT"))
-        {
-          Serial.println("Start Printing");
-          Send();
-          Serial.println("Done Printing");
-          vTaskDelay(1000);
-        }
+        //        Serial.write(Serial2.read());
+        //        if (Serial2.find("OK"))
+        //        {
+        Serial.println("Start Printing");
+        Send();
+        Serial.println("Done Printing");
+        vTaskDelay(2000);
+        //        }
+        //        else{
+        //          Serial.print("Nothing found");
+        //          }
       }
       vTaskDelay(1);
     }
@@ -410,7 +429,7 @@ void setup() {
               NULL);
   xTaskCreate(vWifi,
               "Wifi Task",
-              configMINIMAL_STACK_SIZE + 1000,
+              configMINIMAL_STACK_SIZE + 100,
               NULL,
               configMAX_PRIORITIES - 1,
               NULL);
