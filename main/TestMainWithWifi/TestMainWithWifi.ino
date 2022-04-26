@@ -296,14 +296,14 @@ static void vBuzzerOn(void *pvParametres) {
       vTaskDelay(3000);
       analogWrite(BuzzerSensor, 0);
       g_buzzState = LOW;
-      digitalWrite(LEDr, HIGH);
-      delay(50);
-      digitalWrite(LEDr, LOW);
-      delay(50);
-      digitalWrite(LEDy, HIGH);
-      delay(50);
-      digitalWrite(LEDy, LOW);
-      delay(50);
+//      digitalWrite(LEDr, HIGH);
+//      delay(500);
+//      digitalWrite(LEDr, LOW);
+//      delay(500);
+//      digitalWrite(LEDy, HIGH);
+//      delay(500); 
+//      digitalWrite(LEDy, LOW);
+//      delay(500);
 
       //      for (int thisNote = 0; thisNote < songLength; thisNote++) {
       //        int duration = 1000 / durations[thisNote];

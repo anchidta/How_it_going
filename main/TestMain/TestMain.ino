@@ -2,6 +2,7 @@
 #include <MapleFreeRTOS821.h>
 #include <Wire.h>
 #include "DHT.h"
+#include "pitches.h"
 
 //-------------------------------- Pins --------------------------------
 #define BuzzerSensor PA1
@@ -10,6 +11,10 @@
 
 #define LdrSensor PB0
 #define LEDs PB14
+#define LEDr PB10
+#define LEDy PB11
+#define LEDg PB12
+#define LEDor PB13
 #define BuzzInterruptPin PB6    //PIR sensor
 #define FanInterruptPin PB7  //Touch sensor
 #define FanInA PB8
@@ -47,6 +52,22 @@ float g_Temperature;
 int g_dayTime = HIGH;
 int g_fanState = LOW;
 int g_buzzState = LOW;
+
+int melody[] = {
+  NOTE_FS5, NOTE_FS5, NOTE_D5, NOTE_B4, NOTE_B4, NOTE_E5,
+  NOTE_E5, NOTE_E5, NOTE_GS5, NOTE_GS5, NOTE_A5, NOTE_B5,
+  NOTE_A5, NOTE_A5, NOTE_A5, NOTE_E5, NOTE_D5, NOTE_FS5,
+  NOTE_FS5, NOTE_FS5, NOTE_E5, NOTE_E5, NOTE_FS5, NOTE_E5
+};
+
+int durations[] = {
+  8, 8, 8, 4, 4, 4,
+  4, 5, 8, 8, 8, 8,
+  8, 8, 8, 4, 4, 4,
+  4, 5, 8, 8, 8, 8
+};
+int songLength = sizeof(melody) / sizeof(melody[0]);
+
 //------------------------- Functions ----------------------------------
 
 float getVPP() {
@@ -239,32 +260,55 @@ static void vFanOn(void *pvParametres) {
     Serial.println("Change Fan State");
     g_fanState = !g_fanState;                         // State Toggle.
     digitalWrite(FanInB, g_fanState);
+    if (g_fanState == HIGH) {                    // If Fan ON LED green ON LED orange OFF
+      digitalWrite(LEDg, HIGH);
+      digitalWrite(LEDor, LOW);
+    }
+    else {
+      digitalWrite(LEDg, LOW);                 // If Fan OFF LED green OFF LED orange ON
+      digitalWrite(LEDor, HIGH);
+    }
 
   }
 }
 
 static void vBuzzerOn(void *pvParametres) {
   for (;;) {
-    
+
     xSemaphoreTake(SemBuzz, portMAX_DELAY);      // Max delay time in board because don't know when interrupt begin
     if (!g_dayTime) {
 
       Serial.println(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>  DETECTED");
-      analogWrite(BuzzerSensor, 230);
-      g_buzzState = HIGH;
-      vTaskDelay(3000);
-      analogWrite(BuzzerSensor, 0);
-      g_buzzState = LOW;
+      //      analogWrite(BuzzerSensor, 230);
+      //      g_buzzState = HIGH;
+      //      vTaskDelay(3000);
+      //      analogWrite(BuzzerSensor, 0);
+      //      g_buzzState = LOW;
+      for (int thisNote = 0; thisNote < songLength; thisNote++) {
+        int duration = 1000 / durations[thisNote];
+        tone(BuzzerSensor, melody[thisNote], duration);
+        int pause = duration * 0.3;
+        delay(pause);
+        noTone(BuzzerSensor);
+        digitalWrite(LEDr, HIGH);
+        delay(50);
+        digitalWrite(LEDr, LOW);
+        delay(50);
+        digitalWrite(LEDy, HIGH);
+        delay(50);
+        digitalWrite(LEDy, LOW);
+        delay(50);
+      }
 
     }
     vTaskDelay(100);
-    
+
   }
 }
 
 static void vLightsOn(void *pvParameters) {
   for (;;) {
-    
+
     int ldrStatus = analogRead(LdrSensor);
 
     //Lights are on
@@ -286,7 +330,7 @@ static void vLightsOn(void *pvParameters) {
 
     }
     vTaskDelay(200);
-    
+
   }
 }
 
@@ -358,7 +402,7 @@ void setup() {
   Serial.begin(115200);
   Serial2.begin(115200);
   dht.begin();
-//  wifi_init();
+  //  wifi_init();
   //Pins
   pinMode(BuzzerSensor, OUTPUT);
   pinMode(DhtSensor, INPUT);
@@ -369,7 +413,11 @@ void setup() {
   pinMode(FanInA, OUTPUT);
   pinMode(FanInB, OUTPUT);
   pinMode(LEDs, OUTPUT);
-
+  pinMode(LEDr, OUTPUT);
+  pinMode(LEDy, OUTPUT);
+  pinMode(LEDg, OUTPUT);
+  pinMode(LEDor, OUTPUT);
+  
   Serial.println("Hello");
 
   //Interrupt
@@ -408,12 +456,12 @@ void setup() {
               NULL,
               configMAX_PRIORITIES - 4,
               NULL);
-//  xTaskCreate(vWifi,
-//              "Wifi Task",
-//              configMINIMAL_STACK_SIZE + 1000,
-//              NULL,
-//              configMAX_PRIORITIES - 1,
-//              NULL);
+  //  xTaskCreate(vWifi,
+  //              "Wifi Task",
+  //              configMINIMAL_STACK_SIZE + 1000,
+  //              NULL,
+  //              configMAX_PRIORITIES - 1,
+  //              NULL);
 
   noInterrupts();
   vTaskStartScheduler();
